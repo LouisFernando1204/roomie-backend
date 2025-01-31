@@ -1,16 +1,14 @@
 const mongoose = require("mongoose");
 
 const BookingSchema = new mongoose.Schema({
-    bookingId: { type: String, required: true, unique: true },
     accommodationId: { type: mongoose.Schema.Types.ObjectId, ref: "Accommodation", required: true },
     roomId: { type: mongoose.Schema.Types.ObjectId, ref: "Room", required: true },
-    accountAddress: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    userAccount: { type: String, required: true },
     tokenId: { type: String, required: true },
-    checkIn: { type: String, required: true },
-    checkOut: { type: String, required: true },
+    userAccount: { type: String, required: true },
+    checkIn: { type: Number, required: true },
+    checkOut: { type: Number, required: true },
     durationInDays: { type: Number, required: true },
-    bookingTimestamp: { type: Date, default: Date.now }
-});
+    bookingTimestamp: { type: Number, default: () => Math.floor(Date.now() / 1000) }
+}, { timestamps: true });
 
 module.exports = mongoose.model("Booking", BookingSchema);

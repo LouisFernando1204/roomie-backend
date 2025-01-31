@@ -32,6 +32,10 @@ app.use(cookieParser());
 app.use('/', express.static(path.join(__dirname, 'public')));
 
 app.use('/', require('./routes/root'));
+app.use('/accommodations', require('./routes/api/accommodationRoute'));
+app.use('/rooms', require('./routes/api/roomRoute'));
+app.use('/bookings', require('./routes/api/bookingRoute'));
+app.use('/ratings', require('./routes/api/ratingRoute'));
 
 app.all('*', (req, res) => {
     res.status(404);
