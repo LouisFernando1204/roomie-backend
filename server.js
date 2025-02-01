@@ -36,6 +36,7 @@ app.use('/accommodations', require('./routes/api/accommodationRoute'));
 app.use('/rooms', require('./routes/api/roomRoute'));
 app.use('/bookings', require('./routes/api/bookingRoute'));
 app.use('/ratings', require('./routes/api/ratingRoute'));
+app.use('/cases', require('./routes/api/caseRoute'));
 
 app.all('*', (req, res) => {
     res.status(404);

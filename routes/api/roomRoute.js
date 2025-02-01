@@ -5,7 +5,6 @@ const roomController = require('../../controllers/roomController');
 router.route('/')
     .get(roomController.getAllRooms)
     .post(roomController.createRoom)
-    .put(roomController.updateRoom)
     .delete(roomController.deleteRoom)
 
 router.route('/:id')
