@@ -127,10 +127,34 @@ const createAccommodationCase = asyncHandler(async (req, res) => {
     res.status(201).json({ message: 'AccommodationCase created and linked to Case', accommodationCase, caseData });
 });
 
+// @desc Delete case
+// @route DELETE /cases
+// @access Public
+const deleteCase = asyncHandler(async (req, res) => {
+    const { id } = req.body;
+
+    if (!id) {
+        return res.status(400).json({ message: 'Case ID required' });
+    }
+
+    const specificCase = await Case.findById(id).exec();
+    if (!specificCase) {
+        return res.status(404).json({ message: 'Case not found' });
+    }
+
+    const deletedCase = await specificCase.deleteOne();
+    if (deletedCase) {
+        res.status(200).json({ message: `Case '${specificCase.name}' deleted` });
+    } else {
+        return res.status(400).json({ message: 'Error while deleting case' })
+    }
+});
+
 module.exports = {
     getAllCases,
     getCaseById,
     getCaseByBookingId,
     createUserCase,
-    createAccommodationCase
+    createAccommodationCase,
+    deleteCase
 };

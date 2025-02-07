@@ -48,8 +48,32 @@ const createBooking = asyncHandler(async (req, res) => {
     }
 });
 
+// @desc Delete booking
+// @route DELETE /bookings
+// @access Public
+const deleteBooking = asyncHandler(async (req, res) => {
+    const { id } = req.body;
+
+    if (!id) {
+        return res.status(400).json({ message: 'Booking ID required' });
+    }
+
+    const booking = await Booking.findById(id).exec();
+    if (!booking) {
+        return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    const deletedBooking = await booking.deleteOne();
+    if (deletedBooking) {
+        res.status(200).json({ message: `Booking '${booking.id}' deleted` });
+    } else {
+        return res.status(400).json({ message: 'Error while deleting booking' })
+    }
+});
+
 module.exports = {
     getAllBookings,
     getBookingById,
-    createBooking
+    createBooking,
+    deleteBooking
 };

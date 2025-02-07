@@ -4,6 +4,7 @@ const caseController = require('../../controllers/caseController');
 
 router.route('/')
     .get(caseController.getAllCases)
+    .delete(caseController.deleteCase)
 
 router.route('/:id')
     .get(caseController.getCaseById)

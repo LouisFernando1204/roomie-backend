@@ -76,9 +76,33 @@ const createRating = asyncHandler(async (req, res) => {
     }
 });
 
+// @desc Delete rating
+// @route DELETE /ratings
+// @access Public
+const deleteRating = asyncHandler(async (req, res) => {
+    const { id } = req.body;
+
+    if (!id) {
+        return res.status(400).json({ message: 'Rating ID required' });
+    }
+
+    const rating = await Rating.findById(id).exec();
+    if (!rating) {
+        return res.status(404).json({ message: 'Rating not found' });
+    }
+
+    const deletedRating = await rating.deleteOne();
+    if (deletedRating) {
+        res.status(200).json({ message: `Rating deleted` });
+    } else {
+        return res.status(400).json({ message: 'Error while deleting rating' })
+    }
+});
+
 module.exports = {
     getAllRatings,
     getRatingById,
     getAverageRatingByAccommodationId,
-    createRating
+    createRating,
+    deleteRating
 };

@@ -5,6 +5,7 @@ const ratingController = require('../../controllers/ratingController');
 router.route('/')
     .get(ratingController.getAllRatings)
     .post(ratingController.createRating)
+    .delete(ratingController.deleteRating)
 
 router.route('/:id')
     .get(ratingController.getRatingById)
