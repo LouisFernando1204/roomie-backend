@@ -20,10 +20,10 @@ const askToGPT = asyncHandler(async (req, res) => {
             {
                 role: "user",
                 content: `Classify the intent of this question: "${message}". Select one of these categories: ["recommendation", "comparison", "facilities", "price", "platform_info", "general"]. 
-                - "recommendation" if the user is looking for hotel suggestions available in Roomie.  
-                - "comparison" if the user wants to compare hotels available in Roomie.  
+                - "recommendation" if the user is looking for hotel suggestions available on Roomie.  
+                - "comparison" if the user wants to compare hotels available on Roomie.  
                 - "facilities" if the user asks about available amenities in a hotel on Roomie.  
-                - "price" if the user asks about the cost of a hotel or a specific room type available in Roomie.  
+                - "price" if the user asks about the cost of a hotel or a specific room type available on Roomie.  
                 - "platform_info" if the user asks about Roomie's features, policies, or how it works.  
                 - "general" if the query is vague but still related to hotels on Roomie.`
             }
@@ -36,34 +36,50 @@ const askToGPT = asyncHandler(async (req, res) => {
     console.log("Intent:", intent);
 
     if (intent === "recommendation") {
-        // Extract structured data for recommendation queries (for hotels available in Roomie)
+        // Extraction for recommendation queries (hotels available on Roomie)
         const extractResponse = await openai.chat.completions.create({
             model: "gpt-3.5-turbo",
             messages: [
-                { role: "system", content: "Extract structured data from hotel search queries for hotels available in Roomie." },
-                { role: "user", content: `Extract key attributes from this message: "${message}". Return JSON: { "accommodationName": ..., "accommodationType": ..., "address": ..., "roomType": ..., "roomDescription": ..., "facilities": ..., "price": ..., "bedSize": ..., "maxOccupancy": ... }` }
+                { 
+                    role: "system", 
+                    content: "Extract structured data from hotel search queries for hotels available on Roomie. Ensure that any hotel names or details extracted are consistent with hotels listed on Roomie." 
+                },
+                { 
+                    role: "user", 
+                    content: `Extract key attributes from this message: "${message}". Return JSON: { "accommodationName": <string or null>, "accommodationType": <string or null>, "address": <string or null>, "roomType": <string or null>, "roomDescription": <string or null>, "facilities": <array or null>, "price": <number or null>, "bedSize": <string or null>, "maxOccupancy": <number or null> }` 
+                }
             ],
             max_tokens: 100,
             temperature: 0.5,
         });
 
         const extractedData = JSON.parse(extractResponse.choices[0].message.content);
+        console.log("Extracted Data:", extractedData);  // Ini pas pertama kali ak tambahin ini tiba" bener jawaban e
 
         const accommodationQuery = {};
-        if (extractedData.accommodationName) accommodationQuery.accommodationName = new RegExp(extractedData.accommodationName, 'i');
-        if (extractedData.accommodationType) accommodationQuery.accommodationType = new RegExp(extractedData.accommodationType, 'i');
-        if (extractedData.address) accommodationQuery.address = new RegExp(extractedData.address, 'i');
+        if (extractedData.accommodationName) 
+            accommodationQuery.accommodationName = new RegExp(extractedData.accommodationName, 'i');
+        if (extractedData.accommodationType) 
+            accommodationQuery.accommodationType = new RegExp(extractedData.accommodationType, 'i');
+        if (extractedData.address) 
+            accommodationQuery.address = new RegExp(extractedData.address, 'i');
 
         const roomQuery = {};
-        if (extractedData.roomType) roomQuery.roomType = new RegExp(extractedData.roomType, 'i');
-        if (extractedData.roomDescription) roomQuery.roomDescription = new RegExp(extractedData.roomDescription, 'i');
-        if (extractedData.facilities) roomQuery.facilities = { $all: extractedData.facilities };
-        if (extractedData.price) roomQuery.price = { $lte: extractedData.price };
-        if (extractedData.bedSize) roomQuery.bedSize = new RegExp(extractedData.bedSize, 'i');
-        if (extractedData.maxOccupancy) roomQuery.maxOccupancy = { $gte: extractedData.maxOccupancy };
+        if (extractedData.roomType) 
+            roomQuery.roomType = new RegExp(extractedData.roomType, 'i');
+        if (extractedData.roomDescription) 
+            roomQuery.roomDescription = new RegExp(extractedData.roomDescription, 'i');
+        if (extractedData.facilities) 
+            roomQuery.facilities = { $all: extractedData.facilities };
+        if (extractedData.price) 
+            roomQuery.price = { $lte: extractedData.price };
+        if (extractedData.bedSize) 
+            roomQuery.bedSize = new RegExp(extractedData.bedSize, 'i');
+        if (extractedData.maxOccupancy) 
+            roomQuery.maxOccupancy = { $gte: extractedData.maxOccupancy };
 
         const accommodations = await Accommodation.find(accommodationQuery);
-
+        
         if (accommodations.length === 0) {
             return res.json({ response: "Sorry, we couldn't find any hotels available on Roomie that match your search." });
         }
@@ -85,8 +101,14 @@ const askToGPT = asyncHandler(async (req, res) => {
         const recommendationResponse = await openai.chat.completions.create({
             model: "gpt-3.5-turbo",
             messages: [
-                { role: "system", content: "You are a helpful travel assistant that provides hotel and room recommendations that are available on Roomie in a friendly and natural tone." },
-                { role: "user", content: `Based on the following data, generate a well-structured recommendation message:\n${formattedData}` }
+                { 
+                    role: "system", 
+                    content: "You are a helpful travel assistant that provides hotel and room recommendations available on Roomie in a friendly and natural tone." 
+                },
+                { 
+                    role: "user", 
+                    content: `Based on the following data, generate a well-structured recommendation message:\n${formattedData}` 
+                }
             ],
             max_tokens: 200,
             temperature: 0.7,
@@ -95,12 +117,18 @@ const askToGPT = asyncHandler(async (req, res) => {
         return res.json({ response: recommendationResponse.choices[0].message.content });
         
     } else if (intent === "comparison") {
-        // Extract hotel names for comparison queries (for hotels on Roomie)
+        // Extraction for comparison queries (hotels available on Roomie)
         const extractResponse = await openai.chat.completions.create({
             model: "gpt-3.5-turbo",
             messages: [
-                { role: "system", content: "Extract structured hotel names for comparison queries for hotels available on Roomie." },
-                { role: "user", content: `Extract hotel names from this message: "${message}". Return JSON: { "hotels": ["Hotel Name 1", "Hotel Name 2"] }` }
+                { 
+                    role: "system", 
+                    content: "Extract structured hotel names for comparison queries for hotels available on Roomie. Only extract names that are part of the Roomie database." 
+                },
+                { 
+                    role: "user", 
+                    content: `Extract hotel names from this message: "${message}". Return JSON: { "hotels": ["Hotel Name 1", "Hotel Name 2"] }` 
+                }
             ],
             max_tokens: 50,
             temperature: 0.5,
@@ -152,8 +180,14 @@ const askToGPT = asyncHandler(async (req, res) => {
         const comparisonResponse = await openai.chat.completions.create({
             model: "gpt-3.5-turbo",
             messages: [
-                { role: "system", content: "You are a helpful travel assistant that compares hotels available on Roomie in a friendly and natural tone." },
-                { role: "user", content: `Based on the following data, generate a structured hotel comparison message:\n${formattedData}` }
+                { 
+                    role: "system", 
+                    content: "You are a helpful travel assistant that compares hotels available on Roomie in a friendly and natural tone." 
+                },
+                { 
+                    role: "user", 
+                    content: `Based on the following data, generate a structured hotel comparison message:\n${formattedData}` 
+                }
             ],
             max_tokens: 200,
             temperature: 0.7,
@@ -162,12 +196,18 @@ const askToGPT = asyncHandler(async (req, res) => {
         return res.json({ response: comparisonResponse.choices[0].message.content });
         
     } else if (intent === "facilities") {
-        // Extract the hotel name for facilities queries (for hotels on Roomie)
+        // Extraction for facilities queries (for hotels available on Roomie)
         const extractResponse = await openai.chat.completions.create({
             model: "gpt-3.5-turbo",
             messages: [
-                { role: "system", content: "Extract the hotel name from the following facilities query for hotels available on Roomie." },
-                { role: "user", content: `From this question: "${message}", extract the hotel name.\nJSON Format: { "hotel": "Hotel Name" }` }
+                { 
+                    role: "system", 
+                    content: "Extract the hotel name from the following facilities query for hotels available on Roomie. Ensure that the extracted name exists in Roomie's database." 
+                },
+                { 
+                    role: "user", 
+                    content: `From this question: "${message}", extract the hotel name.\nJSON Format: { "hotel": "Hotel Name" }` 
+                }
             ],
             max_tokens: 50,
             temperature: 0.5,
@@ -194,8 +234,14 @@ const askToGPT = asyncHandler(async (req, res) => {
         const facilitiesResponse = await openai.chat.completions.create({
             model: "gpt-3.5-turbo",
             messages: [
-                { role: "system", content: "You are a helpful travel assistant providing detailed and engaging information about hotel facilities for hotels available on Roomie in a friendly and natural tone." },
-                { role: "user", content: `Based on the following data, generate a structured and informative response listing the facilities available at ${hotel}:\n\n🔹 *Facilities:*\n${allFacilities.map(facility => `- ${facility}`).join("\n")}` }
+                { 
+                    role: "system", 
+                    content: "You are a helpful travel assistant providing detailed and engaging information about hotel facilities for hotels available on Roomie in a friendly and natural tone." 
+                },
+                { 
+                    role: "user", 
+                    content: `Based on the following data, generate a structured and informative response listing the facilities available at ${hotel}:\n\n🔹 *Facilities:*\n${allFacilities.map(facility => `- ${facility}`).join("\n")}` 
+                }
             ],
             max_tokens: 200,
             temperature: 0.7,
@@ -204,12 +250,18 @@ const askToGPT = asyncHandler(async (req, res) => {
         return res.json({ response: facilitiesResponse.choices[0].message.content });
         
     } else if (intent === "price") {
-        // Extract hotel name and room type (if mentioned) for price queries (for hotels on Roomie)
+        // Extraction for price queries (for hotels available on Roomie)
         const extractResponse = await openai.chat.completions.create({
             model: "gpt-3.5-turbo",
             messages: [
-                { role: "system", content: "Extract the hotel name and room type (if mentioned) from this price query for hotels available on Roomie." },
-                { role: "user", content: `From this question: "${message}", extract the hotel name and room type if available.\nJSON Format: { "hotel": "Hotel Name", "room_type": "Standard Room" (or null if not mentioned) }` }
+                { 
+                    role: "system", 
+                    content: "Extract the hotel name and room type (if mentioned) from this price query for hotels available on Roomie. Only extract names that exist in Roomie." 
+                },
+                { 
+                    role: "user", 
+                    content: `From this question: "${message}", extract the hotel name and room type if available.\nJSON Format: { "hotel": "Hotel Name", "room_type": "Standard Room" (or null if not mentioned) }` 
+                }
             ],
             max_tokens: 50,
             temperature: 0.5,
@@ -236,8 +288,14 @@ const askToGPT = asyncHandler(async (req, res) => {
             const gptResponse = await openai.chat.completions.create({
                 model: "gpt-3.5-turbo",
                 messages: [
-                    { role: "system", content: "You are a helpful travel assistant providing hotel price information for hotels available on Roomie in a friendly and natural tone." },
-                    { role: "user", content: `Based on the following data, generate a natural response stating the average room price for ${hotel}. The average price is Rp${avgPrice}.` }
+                    { 
+                        role: "system", 
+                        content: "You are a helpful travel assistant providing hotel price information for hotels available on Roomie in a friendly and natural tone." 
+                    },
+                    { 
+                        role: "user", 
+                        content: `Based on the following data, generate a natural response stating the average room price for ${hotel}. The average price is Rp${avgPrice}.` 
+                    }
                 ],
                 max_tokens: 100,
                 temperature: 0.7,
@@ -251,8 +309,14 @@ const askToGPT = asyncHandler(async (req, res) => {
             const gptResponse = await openai.chat.completions.create({
                 model: "gpt-3.5-turbo",
                 messages: [
-                    { role: "system", content: "You are a helpful travel assistant providing hotel room price information for hotels available on Roomie in a friendly and natural tone." },
-                    { role: "user", content: `Based on the following data, generate a natural response stating the price of ${room_type} at ${hotel}. The price is Rp${specificRoom.price}.` }
+                    { 
+                        role: "system", 
+                        content: "You are a helpful travel assistant providing hotel room price information for hotels available on Roomie in a friendly and natural tone." 
+                    },
+                    { 
+                        role: "user", 
+                        content: `Based on the following data, generate a natural response stating the price of ${room_type} at ${hotel}. The price is Rp${specificRoom.price}.` 
+                    }
                 ],
                 max_tokens: 100,
                 temperature: 0.7,
@@ -275,8 +339,14 @@ const askToGPT = asyncHandler(async (req, res) => {
         const platformResponse = await openai.chat.completions.create({
             model: "gpt-3.5-turbo",
             messages: [
-                { role: "system", content: "You are an AI assistant knowledgeable about the Roomie platform. Answer based solely on Roomie's provided information." },
-                { role: "user", content: `Based on the following summary, answer the question: "${message}"\n\n${summaryText}` }
+                { 
+                    role: "system", 
+                    content: "You are an AI assistant knowledgeable about the Roomie platform. Answer based solely on Roomie's provided information." 
+                },
+                { 
+                    role: "user", 
+                    content: `Based on the following summary, answer the question: "${message}"\n\n${summaryText}` 
+                }
             ],
             max_tokens: 150,
             temperature: 0.7,
@@ -293,7 +363,10 @@ const askToGPT = asyncHandler(async (req, res) => {
         const generalResponse = await openai.chat.completions.create({
             model: "gpt-3.5-turbo",
             messages: [
-                { role: "system", content: "You are a travel expert specializing in hotels listed under Roomie. If the question is about hotels outside Roomie, please inform the user politely." },
+                { 
+                    role: "system", 
+                    content: "You are a travel expert specializing in hotels listed under Roomie. If the question is about hotels outside Roomie, please inform the user politely." 
+                },
                 { role: "user", content: message }
             ],
             max_tokens: 150,
@@ -305,8 +378,14 @@ const askToGPT = asyncHandler(async (req, res) => {
         const outOfScopeResponse = await openai.chat.completions.create({
             model: "gpt-3.5-turbo",
             messages: [
-                { role: "system", content: "You are a polite assistant that provides information based solely on hotels available on Roomie." },
-                { role: "user", content: `The user asked: "${message}". Please provide details based on hotels available on Roomie.` }
+                { 
+                    role: "system", 
+                    content: "You are a polite assistant that provides information based solely on hotels available on Roomie." 
+                },
+                { 
+                    role: "user", 
+                    content: `The user asked: "${message}". Please provide details based on hotels available on Roomie.` 
+                }
             ],
             max_tokens: 100,
             temperature: 0.7,
