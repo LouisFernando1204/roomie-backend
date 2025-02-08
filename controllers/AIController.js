@@ -2,7 +2,7 @@ const { OpenAI } = require("openai");
 const axios = require('axios');
 const asyncHandler = require('express-async-handler');
 const Accommodation = require("../models/Accommodation");
-const Room = require("../models/Accommodation");
+const Room = require("../models/Room");
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
